@@ -29,6 +29,7 @@
 #include <windows.ui.notifications.h>
 #include <strsafe.h>
 #include <Psapi.h>
+#include <sapi.h>   // Sapi support.
 #include <ShlObj.h>
 #include <roapi.h>
 #include <propvarutil.h>
@@ -115,6 +116,8 @@ namespace WinToastLib {
         void setThirdLine(_In_ const std::wstring& text);
         void setTextField(_In_ const std::wstring& txt, _In_ TextField pos);
         void setAttributionText(_In_ const std::wstring & attributionText);
+        void enableSapi(_In_ bool enableSapi);  // Sapi support.
+        bool isSapiEnabled() const;             // Sapi support.
         void setImagePath(_In_ const std::wstring& imgPath);
         void setAudioPath(_In_ WinToastTemplate::AudioSystemFile audio);
         void setAudioPath(_In_ const std::wstring& audioPath);
@@ -142,6 +145,7 @@ namespace WinToastLib {
         std::wstring                        _imagePath{};
         std::wstring                        _audioPath{};
         std::wstring                        _attributionText{};
+        bool                                _enableSapi{false};
         INT64                               _expiration{0};
         AudioOption                         _audioOption{WinToastTemplate::AudioOption::Default};
         WinToastTemplateType                _type{WinToastTemplateType::Text01};
@@ -158,6 +162,7 @@ namespace WinToastLib {
             InvalidAppUserModelID,
             InvalidParameters,
             InvalidHandler,
+            SapiFailedToInitialize,
             NotDisplayed,
             UnknownError
         };
@@ -201,6 +206,7 @@ namespace WinToastLib {
         std::wstring                                    _appName{};
         std::wstring                                    _aumi{};
         std::map<INT64, ComPtr<IToastNotification>>     _buffer{};
+        ISpVoice*                                       _pVoice = NULL;
 
         HRESULT validateShellLinkHelper(_Out_ bool& wasChanged);
         HRESULT createShellLinkHelper();

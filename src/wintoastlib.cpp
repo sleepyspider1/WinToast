@@ -24,6 +24,14 @@
 #include <unordered_map>
 #include <array>
 
+// BEGIN - SAPI support.
+#define _ATL_APARTMENT_THREADED
+#include <atlbase.h>
+extern CComModule _Module;
+#include <atlcom.h>
+#pragma comment(lib, "sapi")
+// END - SAPI support.
+
 #pragma comment(lib,"shlwapi")
 #pragma comment(lib,"user32")
 
@@ -377,6 +385,8 @@ WinToast::WinToast() :
 
 WinToast::~WinToast() {
     if (_hasCoInitialized) {
+        _pVoice->Release(); // Sapi support.
+        _pVoice = NULL;     // Sapi support.
         CoUninitialize();
     }
 }
@@ -434,6 +444,7 @@ const std::wstring& WinToast::strerror(WinToastError error) {
         {WinToastError::InvalidAppUserModelID, L"The AUMI is not a valid one"},
         {WinToastError::InvalidParameters, L"The parameters used to configure the library are not valid normally because an invalid AUMI or App Name"},
         {WinToastError::NotDisplayed, L"The toast was created correctly but WinToast was not able to display the toast"},
+        {WinToastError::SapiFailedToInitialize, L"Sapi failed to initialize"},
         {WinToastError::UnknownError, L"Unknown error"}
     };
 
@@ -502,6 +513,13 @@ bool WinToast::initialize(_Out_ WinToastError* error) {
     if (FAILED(DllImporter::SetCurrentProcessExplicitAppUserModelID(_aumi.c_str()))) {
         setError(error, WinToastError::InvalidAppUserModelID);
         DEBUG_MSG(L"Error while attaching the AUMI to the current proccess =(");
+        return false;
+    }
+
+    HRESULT hr = CoCreateInstance(CLSID_SpVoice, NULL, CLSCTX_ALL, IID_ISpVoice, (void**)&_pVoice);
+    if (FAILED(hr)) {
+        setError(error, WinToastError::SapiFailedToInitialize);
+        DEBUG_MSG(L"Error while initializing sapi.");
         return false;
     }
 
@@ -677,6 +695,15 @@ INT64 WinToast::showToast(_In_ const WinToastTemplate& toast, _In_  IWinToastHan
                             hr = addDurationHelper(xmlDocument.Get(),
                                 (toast.duration() == WinToastTemplate::Duration::Short) ? L"short" : L"long");
                         }
+
+                        // BEGIN - Sapi support.
+                        if (_pVoice != nullptr && toast.isSapiEnabled()) {
+                            for (std::size_t i = 0, fieldsCount = toast.textFieldsCount(); i < fieldsCount && SUCCEEDED(hr); i++) {
+                                _pVoice->Speak(toast.textField(WinToastTemplate::TextField(i)).c_str(), 0, NULL);
+                            }
+                            _pVoice->Speak(toast.attributionText().c_str(), 0, NULL);
+                        }
+                        // END - Sapi support.
 
                     } else {
                         DEBUG_MSG("Modern features (Actions/Sounds/Attributes) not supported in this os version");
@@ -1070,6 +1097,13 @@ void WinToastTemplate::setAttributionText(_In_ const std::wstring& attributionTe
     _attributionText = attributionText;
 }
 
+void WinToastTemplate::enableSapi(_In_ bool enableSapi) {
+    _enableSapi = enableSapi;
+}
+
+bool WinToastTemplate::isSapiEnabled() const {
+    return _enableSapi;
+}
 void WinToastTemplate::addAction(_In_ const std::wstring & label) {
 	_actions.push_back(label);
 }

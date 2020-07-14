@@ -11,6 +11,10 @@
 
 ***
 
+Modifications made to this fork
+1. Added basic text to speech support. (add --sapi to the command line). It will read the primary and secondary messages out loud.
+2. Disabled creating the shortcut on the start menu.
+
 WinToast
 ===================
 
