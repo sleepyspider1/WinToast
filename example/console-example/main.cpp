@@ -23,7 +23,7 @@ public:
             break;
         case TimedOut:
             std::wcout << L"The toast has timed out" << std::endl;
-            exit(2);
+            //exit(2);
             break;
         case ApplicationHidden:
             std::wcout << L"The application hid the toast using ToastNotifier.hide()" << std::endl;

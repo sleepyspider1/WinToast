@@ -696,15 +696,6 @@ INT64 WinToast::showToast(_In_ const WinToastTemplate& toast, _In_  IWinToastHan
                                 (toast.duration() == WinToastTemplate::Duration::Short) ? L"short" : L"long");
                         }
 
-                        // BEGIN - Sapi support.
-                        if (_pVoice != nullptr && toast.isSapiEnabled()) {
-                            for (std::size_t i = 0, fieldsCount = toast.textFieldsCount(); i < fieldsCount && SUCCEEDED(hr); i++) {
-                                _pVoice->Speak(toast.textField(WinToastTemplate::TextField(i)).c_str(), 0, NULL);
-                            }
-                            _pVoice->Speak(toast.attributionText().c_str(), 0, NULL);
-                        }
-                        // END - Sapi support.
-
                     } else {
                         DEBUG_MSG("Modern features (Actions/Sounds/Attributes) not supported in this os version");
                     }
@@ -737,6 +728,15 @@ INT64 WinToast::showToast(_In_ const WinToastTemplate& toast, _In_  IWinToastHan
                                         _buffer[id] = notification;
                                         DEBUG_MSG("xml: " << Util::AsString(xmlDocument));
                                         hr = notifier->Show(notification.Get());
+                                        // BEGIN - Sapi support.
+                                        if (_pVoice != nullptr && toast.isSapiEnabled()) {
+                                            for (std::size_t i = 0, fieldsCount = toast.textFieldsCount(); i < fieldsCount && SUCCEEDED(hr); i++) {
+                                                _pVoice->Speak(toast.textField(WinToastTemplate::TextField(i)).c_str(), 0, NULL);
+                                            }
+                                            _pVoice->Speak(toast.attributionText().c_str(), 0, NULL);
+                                        }
+                                        // END - Sapi support.
+
                                         if (FAILED(hr)) {
                                             setError(error, WinToastError::NotDisplayed);
                                         }
