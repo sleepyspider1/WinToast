@@ -730,10 +730,14 @@ INT64 WinToast::showToast(_In_ const WinToastTemplate& toast, _In_  IWinToastHan
                                         hr = notifier->Show(notification.Get());
                                         // BEGIN - Sapi support.
                                         if (_pVoice != nullptr && toast.isSapiEnabled()) {
+                                            std::wstring concatenatedString;
                                             for (std::size_t i = 0, fieldsCount = toast.textFieldsCount(); i < fieldsCount && SUCCEEDED(hr); i++) {
-                                                _pVoice->Speak(toast.textField(WinToastTemplate::TextField(i)).c_str(), 0, NULL);
+                                                concatenatedString += toast.textField(WinToastTemplate::TextField(i));
+                                                concatenatedString += '.';
                                             }
-                                            _pVoice->Speak(toast.attributionText().c_str(), 0, NULL);
+                                            concatenatedString += toast.attributionText();
+                                            concatenatedString += '.';
+                                            _pVoice->Speak(concatenatedString.c_str(), 0, NULL);
                                         }
                                         // END - Sapi support.
 
